@@ -41,11 +41,34 @@ export default function JobForm() {
         className="w-full bg-white/10 border border-white/20 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
       />
 
-      <input
-        type="file"
-        onChange={(e) => setResume(e.target.files?.[0] || null)}
-        className="w-full text-gray-300"
-      />
+      <div>
+  <label className="block text-sm text-gray-400 mb-2">
+    Upload Resume
+  </label>
+
+  <div className="flex items-center gap-3">
+    {/* Hidden Input */}
+    <input
+      type="file"
+      id="resumeUpload"
+      onChange={(e) => setResume(e.target.files?.[0] || null)}
+      className="hidden"
+    />
+
+    {/* Custom Button */}
+    <label
+      htmlFor="resumeUpload"
+      className="cursor-pointer px-4 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 transition"
+    >
+      📄 Choose File
+    </label>
+
+    {/* File Name */}
+    <span className="text-sm text-gray-400 truncate max-w-[200px]">
+      {resume ? resume.name : "No file chosen"}
+    </span>
+  </div>
+</div>
 
       <button
         className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 transition font-semibold"
