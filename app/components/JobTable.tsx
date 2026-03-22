@@ -6,6 +6,26 @@ type Job = {
 };
 
 export default function JobTable({ jobs }: { jobs: Job[] }) {
+
+  const handleAutoApply = async (link: string) => {
+  try {
+    const res = await fetch("/api/auto-apply", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ link }),
+    });
+
+    const data = await res.json();
+
+    console.log("Auto Apply Result:", data);
+    alert("🤖 Agent is applying...");
+  } catch (err) {
+    console.error(err);
+  }
+};
+
   return (
     <div className="bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl rounded-2xl p-6 mt-6">
       <h2 className="text-lg font-semibold mb-4">Applications</h2>
@@ -52,6 +72,14 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
                   }`}
                 >
                   Apply 🔗
+                </button>
+
+                 
+                <button
+                  onClick={() => handleAutoApply(job.link)}
+                  className="px-3 py-1 rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30"
+                >
+                  🤖 Auto Apply
                 </button>
               </td>
             </tr>
