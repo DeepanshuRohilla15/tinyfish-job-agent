@@ -16,7 +16,7 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
             <th className="pb-2">Role</th>
             <th className="pb-2">Company</th>
             <th className="pb-2">Status</th>
-            <th className="pb-2">Action</th> {/* 👈 NEW COLUMN */}
+            <th className="pb-2">Action</th> 
           </tr>
         </thead>
 
@@ -26,7 +26,6 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
               <td className="py-3">{job.title}</td>
               <td>{job.company}</td>
 
-              {/* Status */}
               <td>
                 <span
                   className={`px-3 py-1 rounded-full text-sm ${
@@ -40,8 +39,6 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
                   {job.status}
                 </span>
               </td>
-
-              {/* 👇 THIS IS STEP 3 (Apply Button) */}
               <td>
                 <button
                   disabled={!job.link || job.link === "#"}

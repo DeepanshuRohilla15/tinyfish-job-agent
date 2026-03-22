@@ -90,7 +90,6 @@ export default function JobForm({setJobs}: any) {
     </span>
   </div>
 </div>
-
       <button
         className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 transition font-semibold"
       >

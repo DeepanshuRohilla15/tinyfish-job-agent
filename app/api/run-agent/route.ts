@@ -11,17 +11,18 @@ export async function POST(req: NextRequest) {
 
     // 🔥 Define goal for agent
     const goal = `
-Go to Lever Jobs.
+Go to LinkedIn Jobs.
 
 Search for "${role}" jobs in "${location}".
 
 Extract top 5 jobs with:
 - title
 - company
+- link
 
-Return STRICT JSON like:
+Return STRICT JSON:
 [
-  { "title": "...", "company": "..." }
+  { "title": "...", "company": "...", "link": "..." }
 ]
 `;
 
