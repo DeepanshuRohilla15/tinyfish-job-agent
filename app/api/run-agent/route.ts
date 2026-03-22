@@ -1,38 +1,94 @@
-import {NextRequest, NextResponse} from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-    try{
-        const formData = await req.formData();
+  try {
+    const formData = await req.formData();
 
-        const role = formData.get("role");
-        const location = formData.get("location");
-        const resume = formData.get("resume");
+    const role = formData.get("role") as string;
+    const location = formData.get("location") as string;
 
-        console.log("Incoming Request:");
-        console.log({ role, location, resume });
+    console.log({ role, location });
 
-        //call TinyFish API here
+    // 🔥 Define goal for agent
+    const goal = `
+Go to Lever Jobs.
 
-        // Dummy response (simulate jobs found)
-        const jobs = [
-            {
-                title: "Backend Engineer",
-                company: "Amazon",
-                status: "Applied"
-            },
-            {
-                title : "Software Engineer",
-                company : "Google",
-                status : "Pending"
-            }
-        ];
+Search for "${role}" jobs in "${location}".
 
-        return NextResponse.json({success : true, jobs});
+Extract top 5 jobs with:
+- title
+- company
+
+Return STRICT JSON like:
+[
+  { "title": "...", "company": "..." }
+]
+`;
+
+    // 🔥 Call TinyFish SSE API
+    const response = await fetch(
+      "https://agent.tinyfish.ai/v1/automation/run-sse",
+      {
+        method: "POST",
+        headers: {
+          "X-API-Key": process.env.TINYFISH_API_KEY!,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: "https://jobs.lever.co",
+          goal,
+        }),
+      }
+    );
+
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+
+    let fullText = "";
+
+    // 🔥 Read streaming response
+    while (true) {
+      const { done, value } = await reader!.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      fullText += chunk;
+
+      console.log("Chunk:", chunk); // useful for debugging
     }
-    catch(error){
-        return NextResponse.json(
-            {success : false, error: "Something went wrong"},
-            {status : 500}
-        );
+
+    console.log("Final Output:", fullText);
+
+    // 🔥 Extract JSON from messy output
+    let jobs: any[] = [];
+
+    try {
+      const jsonMatch = fullText.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        jobs = JSON.parse(jsonMatch[0]);
+      }
+    } catch (err) {
+      console.error("JSON parse failed");
     }
+
+    // Normalize for UI
+    const formattedJobs = jobs.map((job: any) => ({
+        title: job.title || "Unknown Role",
+        company: job.company || "Unknown Company",
+        link: job.link || "#",  
+        status: "Found",
+        }));
+
+    return NextResponse.json({
+      success: true,
+      jobs: formattedJobs,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      { success: false, error: "Agent failed" },
+      { status: 500 }
+    );
+  }
 }
