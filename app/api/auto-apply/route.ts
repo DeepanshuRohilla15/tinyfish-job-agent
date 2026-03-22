@@ -7,20 +7,22 @@ export async function POST(req: NextRequest) {
     console.log("Auto applying to:", link);
 
     const goal = `
-Open this job link: ${link}
+        Open this job link: ${link}
 
-Wait for page to load.
+        Check if login is required.
 
-Find and click the "Apply" button.
+        IF login page appears:
+        - Stop automation
+        - Return: { "status": "login_required" }
 
-If a form appears:
-- Fill dummy name, email
-- Scroll through form
-- Do NOT submit
+        ELSE:
+        - Click Apply button
+        - Start filling form
+        - Do NOT submit
 
-Return status like:
-{ "status": "applied_started" }
-`;
+        Return:
+        { "status": "applied_started" }
+        `;
 
     const response = await fetch(
       "https://agent.tinyfish.ai/v1/automation/run-sse",
@@ -52,11 +54,18 @@ Return status like:
       console.log("Agent:", chunk); // 🔥 logs
     }
 
+    let status = "unknown";
+
+    if (fullText.includes("login_required")) {
+    status = "login_required";
+    } else if (fullText.includes("applied_started")) {
+    status = "applied_started";
+    }
+
     return NextResponse.json({
-      success: true,
-      message: "Auto apply flow executed",
-      raw: fullText,
-    });
+        success: true,
+        status,
+        });
   } catch (error) {
     console.error(error);
 

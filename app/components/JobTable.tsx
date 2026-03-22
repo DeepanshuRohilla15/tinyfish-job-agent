@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 type Job = {
   title: string;
   company: string;
@@ -6,25 +10,53 @@ type Job = {
 };
 
 export default function JobTable({ jobs }: { jobs: Job[] }) {
+  const [logs, setLogs] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleAutoApply = async (link: string) => {
-  try {
-    const res = await fetch("/api/auto-apply", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ link }),
-    });
+    setLogs([]);
+    setLoading(true);
 
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/auto-apply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ link }),
+      });
 
-    console.log("Auto Apply Result:", data);
-    alert("🤖 Agent is applying...");
-  } catch (err) {
-    console.error(err);
-  }
-};
+      const data = await res.json();
+
+      console.log(data);
+
+      if (data.status === "login_required") {
+        setLogs([
+          "🔐 Login required",
+          "👉 Redirecting you to job page...",
+        ]);
+
+        window.open(link, "_blank", "noopener,noreferrer");
+
+      } else if (data.status === "applied_started") {
+        setLogs([
+          "🔍 Opening job page...",
+          "🖱 Clicking Apply button...",
+          "📄 Filling form...",
+          "✅ Application process started",
+        ]);
+
+      } else {
+        setLogs(["⚠️ Unknown response from agent"]);
+      }
+
+    } catch (err) {
+      console.error(err);
+      setLogs(["❌ Something went wrong"]);
+    }
+
+    setLoading(false);
+  };
 
   return (
     <div className="bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl rounded-2xl p-6 mt-6">
@@ -36,7 +68,7 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
             <th className="pb-2">Role</th>
             <th className="pb-2">Company</th>
             <th className="pb-2">Status</th>
-            <th className="pb-2">Action</th> 
+            <th className="pb-2">Action</th>
           </tr>
         </thead>
 
@@ -59,7 +91,9 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
                   {job.status}
                 </span>
               </td>
-              <td>
+
+              <td className="flex gap-2">
+                {/* Direct Apply */}
                 <button
                   disabled={!job.link || job.link === "#"}
                   onClick={() =>
@@ -74,18 +108,36 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
                   Apply 🔗
                 </button>
 
-                 
+                {/* Auto Apply */}
                 <button
+                  disabled={loading}
                   onClick={() => handleAutoApply(job.link)}
-                  className="px-3 py-1 rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30"
+                  className={`px-3 py-1 rounded-lg ${
+                    loading
+                      ? "bg-gray-500/20 text-gray-500"
+                      : "bg-purple-500/20 text-purple-400 hover:bg-purple-500/30"
+                  }`}
                 >
-                  🤖 Auto Apply
+                  {loading ? "Running..." : "🤖 Auto Apply"}
                 </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {/* Agent Logs */}
+      {logs.length > 0 && (
+        <div className="mt-6 bg-white/5 border border-white/10 rounded-2xl p-4">
+          <h3 className="text-sm text-gray-400 mb-3">Agent Logs</h3>
+
+          <div className="space-y-2 text-sm">
+            {logs.map((log, index) => (
+              <p key={index}>{log}</p>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
