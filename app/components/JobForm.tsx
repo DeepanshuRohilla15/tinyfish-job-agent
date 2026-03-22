@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function JobForm() {
+export default function JobForm({setJobs}: any) {
   const [role, setRole] = useState("");
   const [location, setLocation] = useState("");
   const [resume, setResume] = useState<File | null>(null);
@@ -12,10 +12,31 @@ export default function JobForm() {
     e.preventDefault();
     setLoading(true);
 
-    // simulate API
-    setTimeout(() => {
-      setLoading(false);
-    }, 2000);
+    try{
+      const formData = new FormData();
+      formData.append("role", role);
+      formData.append("location", location);
+      if(resume) formData.append("resume", resume);
+
+      const res = await fetch("/api/run-agent", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if(data.success){
+        setJobs(data.jobs);
+      }
+
+      console.log("Respone:", data);
+
+      // Send jobs to parent later
+
+    } catch(err){
+      console.error(err);
+    }
+
+    setLoading(false);
   };
 
   return (

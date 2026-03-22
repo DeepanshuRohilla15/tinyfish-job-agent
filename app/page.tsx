@@ -1,28 +1,33 @@
+"use client"
+
+import { useState } from "react";
 import Navbar from "./components/Navbar";
 import JobForm from "./components/JobForm";
 import JobTable from "./components/JobTable";
 import ActivityPanel from "./components/ActivityPanel";
 
 export default function Home() {
-  const dummyJobs = [
-    {
-      title: "Backend Engineer",
-      company: "Amazon",
-      status: "Applied",
-    },
-    {
-      title: "Software Engineer",
-      company: "Google",
-      status: "Pending",
-    },
-  ];
+
+  const [jobs, setJobs] = useState([]);
+
+  // const dummyJobs = [
+  //   {
+  //     title: "Backend Engineer",
+  //     company: "Amazon",
+  //     status: "Applied",
+  //   },
+  //   {
+  //     title: "Software Engineer",
+  //     company: "Google",
+  //     status: "Pending",
+  //   },
+  // ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
       <Navbar />
 
       <div className="max-w-5xl mx-auto px-6 py-10">
-        {/* Hero */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold">
             Autonomous Job Hunter 🤖
@@ -32,14 +37,9 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Form */}
-        <JobForm />
-
-        {/* Activity */}
+        <JobForm setJobs={setJobs} />
         <ActivityPanel />
-
-        {/* Table */}
-        <JobTable jobs={dummyJobs} />
+        <JobTable jobs={jobs} />
       </div>
     </div>
   );
