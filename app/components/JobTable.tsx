@@ -15,7 +15,7 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
   const [runId, setRunId] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "running" | "completed">("idle");
 
-  // 🔁 POLLING LOGS FROM BACKEND
+  
   useEffect(() => {
     if (!runId) return;
 
