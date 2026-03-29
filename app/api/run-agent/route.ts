@@ -25,7 +25,6 @@ Return STRICT JSON:
 ]
 `;
 
-   
     const response = await fetch(
       "https://agent.tinyfish.ai/v1/automation/run-sse",
       {
@@ -35,59 +34,99 @@ Return STRICT JSON:
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          url: "https://jobs.lever.co",
+          url: "https://www.linkedin.com/jobs",
           goal,
         }),
       }
     );
 
-    const reader = response.body?.getReader();
+    if (!response.body) {
+      throw new Error("No response body from agent");
+    }
+
+    const reader = response.body.getReader();
     const decoder = new TextDecoder();
 
-    let fullText = "";
+    let finalData: any = null;
 
-    
+    // 🔥 READ SSE STREAM
     while (true) {
-      const { done, value } = await reader!.read();
+      const { done, value } = await reader.read();
       if (done) break;
 
       const chunk = decoder.decode(value);
-      fullText += chunk;
+      console.log("Chunk:", chunk);
 
-      console.log("Chunk:", chunk); 
+      const lines = chunk.split("\n");
+
+      for (let line of lines) {
+        line = line.trim();
+
+        if (!line.startsWith("data:")) continue;
+
+        const jsonStr = line.replace("data:", "").trim();
+
+        if (!jsonStr || jsonStr === "[DONE]") continue;
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+
+          // ✅ Capture final event
+          if (parsed.type === "COMPLETE") {
+            finalData = parsed;
+          }
+        } catch {
+          // Ignore partial JSON chunks
+        }
+      }
     }
 
-    console.log("Final Output:", fullText);
+    console.log("✅ Final Event:", finalData);
 
-    
+    // 🔥 SAFELY EXTRACT JOBS
     let jobs: any[] = [];
 
-    try {
-      const jsonMatch = fullText.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        jobs = JSON.parse(jsonMatch[0]);
+    if (finalData?.result?.result) {
+      const result = finalData.result.result;
+
+      console.log("🧠 RAW RESULT:", result);
+
+      if (Array.isArray(result)) {
+        // ✅ Already parsed (correct case)
+        jobs = result;
+      } else if (typeof result === "string") {
+        // ⚠️ Fallback if agent ever returns string
+        try {
+          jobs = JSON.parse(result);
+        } catch (err) {
+          console.error("❌ JSON parse failed:", result);
+        }
       }
-    } catch (err) {
-      console.error("JSON parse failed");
+    } else {
+      console.error("❌ No result found in COMPLETE event");
     }
 
-    
+    // 🔥 FORMAT RESPONSE
     const formattedJobs = jobs.map((job: any) => ({
-        title: job.title || "Unknown Role",
-        company: job.company || "Unknown Company",
-        link: job.link || "#",  
-        status: "Found",
-        }));
+      title: job?.title || "Unknown Role",
+      company: job?.company || "Unknown Company",
+      link: job?.link || "#",
+      status: "Found",
+    }));
 
     return NextResponse.json({
       success: true,
       jobs: formattedJobs,
     });
+
   } catch (error) {
-    console.error(error);
+    console.error("❌ API ERROR:", error);
 
     return NextResponse.json(
-      { success: false, error: "Agent failed" },
+      {
+        success: false,
+        error: "Agent failed",
+      },
       { status: 500 }
     );
   }
