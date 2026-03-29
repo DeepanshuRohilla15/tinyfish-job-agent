@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Job = {
   title: string;
@@ -15,14 +15,25 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
   const [runId, setRunId] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "running" | "completed">("idle");
 
-  
+  const logEndRef = useRef<HTMLDivElement | null>(null);
+
+
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+
   useEffect(() => {
     if (!runId) return;
+
+    let isActive = true;
 
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/logs?runId=${runId}`);
         const data = await res.json();
+
+        if (!isActive) return;
 
         setLogs(data.logs || []);
         setStatus(data.status);
@@ -34,15 +45,19 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
       } catch (err) {
         console.error("Polling error:", err);
       }
-    }, 2000);
+    }, 1500); // ⚡ slightly faster for smoother feel
 
-    return () => clearInterval(interval);
+    return () => {
+      isActive = false;
+      clearInterval(interval);
+    };
   }, [runId]);
 
   const handleAutoApply = async (link: string) => {
     setLogs([]);
     setLoading(true);
     setStatus("running");
+    setRunId(null); // reset previous run
 
     try {
       const res = await fetch("/api/auto-apply", {
@@ -57,9 +72,8 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
 
       console.log(data);
 
-      // 🧠 IMPORTANT: backend must return runId
       if (data.runId) {
-        setRunId(data.runId);
+        setRunId(data.runId); // 🔥 triggers polling
       }
 
       if (data.status === "login_required") {
@@ -69,13 +83,12 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
         ]);
 
         window.open(link, "_blank", "noopener,noreferrer");
+
         setLoading(false);
         setStatus("idle");
 
       } else if (data.status === "applied_started") {
-        // Initial feedback (real logs will replace this)
         setLogs(["🚀 Starting auto-apply process..."]);
-
       } else {
         setLogs(["⚠️ Unknown response from agent"]);
         setLoading(false);
@@ -158,7 +171,7 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
         </tbody>
       </table>
 
-      {/* 🔥 AGENT LOGS UI (UPGRADED) */}
+      {/* 🔥 AGENT LOGS */}
       {(logs.length > 0 || status === "running") && (
         <div className="mt-6 bg-black/40 border border-white/10 rounded-2xl p-4">
           <h3 className="text-sm text-gray-400 mb-3 flex justify-between">
@@ -169,12 +182,13 @@ export default function JobTable({ jobs }: { jobs: Job[] }) {
             </span>
           </h3>
 
-          <div className="space-y-2 text-sm font-mono max-h-60 overflow-y-auto text-green-400">
+          <div className="text-sm font-mono max-h-60 overflow-y-auto text-green-400 whitespace-pre-wrap">
             {logs.length === 0 ? (
               <p>Waiting for logs...</p>
             ) : (
-              logs.map((log, index) => <p key={index}>• {log}</p>)
+              logs.join("\n")
             )}
+            <div ref={logEndRef} />
           </div>
         </div>
       )}

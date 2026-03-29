@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
 import { logStore } from "@/server/logStore";
-
 
 export async function POST(req: NextRequest) {
   try {
     const { link } = await req.json();
 
-    const runId = uuidv4();
+    // ✅ Use built-in UUID (no dependency needed)
+    const runId = crypto.randomUUID();
 
-    
+    // ✅ Initialize logs
     logStore[runId] = {
       logs: ["🚀 Starting auto apply..."],
       status: "running",
@@ -19,7 +18,7 @@ export async function POST(req: NextRequest) {
       logStore[runId].logs.push(msg);
     };
 
-  
+    // 🔥 Background execution (DO NOT AWAIT)
     (async () => {
       try {
         addLog("🔍 Opening job page...");
@@ -69,17 +68,46 @@ export async function POST(req: NextRequest) {
           const chunk = decoder.decode(value);
           fullText += chunk;
 
-         
-          addLog("⚙️ Processing step...");
           console.log("Agent:", chunk);
+
+          // 🔥 Parse SSE stream properly
+          const lines = chunk.split("\n");
+
+          for (let line of lines) {
+            line = line.trim();
+
+            // ignore noise
+            if (!line || line === "data: [DONE]") continue;
+
+            // remove "data:" prefix
+            if (line.startsWith("data:")) {
+              line = line.replace("data:", "").trim();
+            }
+
+            if (!line) continue;
+
+            // 🎯 Clean user-friendly logs
+            const lower = line.toLowerCase();
+
+            if (lower.includes("open")) {
+              addLog("🔍 Opening job page...");
+            } else if (lower.includes("click")) {
+              addLog("🖱 Clicking apply button...");
+            } else if (lower.includes("form")) {
+              addLog("📄 Filling application form...");
+            } else if (lower.includes("resume")) {
+              addLog("📎 Uploading resume...");
+            } else {
+              addLog(line);
+            }
+          }
         }
 
-        
+        // ✅ Final status detection
         if (fullText.includes("login_required")) {
           addLog("🔐 Login required");
           logStore[runId].status = "completed";
         } else if (fullText.includes("applied_started")) {
-          addLog("📄 Filling application form...");
           addLog("✅ Application process started");
           logStore[runId].status = "completed";
         } else {
@@ -94,7 +122,7 @@ export async function POST(req: NextRequest) {
       }
     })();
 
-    
+    // ✅ Immediate response to frontend
     return NextResponse.json({
       success: true,
       status: "applied_started",
