@@ -9,7 +9,6 @@ export async function POST(req: NextRequest) {
 
     console.log({ role, location });
 
-    // 🔥 Define goal for agent
     const goal = `
 Go to LinkedIn Jobs.
 
@@ -26,7 +25,7 @@ Return STRICT JSON:
 ]
 `;
 
-    // 🔥 Call TinyFish SSE API
+   
     const response = await fetch(
       "https://agent.tinyfish.ai/v1/automation/run-sse",
       {
@@ -47,7 +46,7 @@ Return STRICT JSON:
 
     let fullText = "";
 
-    // 🔥 Read streaming response
+    
     while (true) {
       const { done, value } = await reader!.read();
       if (done) break;
@@ -55,12 +54,12 @@ Return STRICT JSON:
       const chunk = decoder.decode(value);
       fullText += chunk;
 
-      console.log("Chunk:", chunk); // useful for debugging
+      console.log("Chunk:", chunk); 
     }
 
     console.log("Final Output:", fullText);
 
-    // 🔥 Extract JSON from messy output
+    
     let jobs: any[] = [];
 
     try {
@@ -72,7 +71,7 @@ Return STRICT JSON:
       console.error("JSON parse failed");
     }
 
-    // Normalize for UI
+    
     const formattedJobs = jobs.map((job: any) => ({
         title: job.title || "Unknown Role",
         company: job.company || "Unknown Company",

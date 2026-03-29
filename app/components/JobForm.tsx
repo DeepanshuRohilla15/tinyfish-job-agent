@@ -30,7 +30,7 @@ export default function JobForm({setJobs}: any) {
 
       console.log("Respone:", data);
 
-      // Send jobs to parent later
+    
 
     } catch(err){
       console.error(err);
@@ -68,7 +68,7 @@ export default function JobForm({setJobs}: any) {
   </label>
 
   <div className="flex items-center gap-3">
-    {/* Hidden Input */}
+   
     <input
       type="file"
       id="resumeUpload"
@@ -76,7 +76,7 @@ export default function JobForm({setJobs}: any) {
       className="hidden"
     />
 
-    {/* Custom Button */}
+    
     <label
       htmlFor="resumeUpload"
       className="cursor-pointer px-4 py-2 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 transition"
@@ -84,7 +84,7 @@ export default function JobForm({setJobs}: any) {
       📄 Choose File
     </label>
 
-    {/* File Name */}
+   
     <span className="text-sm text-gray-400 truncate max-w-[200px]">
       {resume ? resume.name : "No file chosen"}
     </span>

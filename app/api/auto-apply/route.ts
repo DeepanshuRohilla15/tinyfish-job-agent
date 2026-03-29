@@ -5,10 +5,10 @@ export async function POST(req: NextRequest) {
   try {
     const { link } = await req.json();
 
-    // ✅ Use built-in UUID (no dependency needed)
+    
     const runId = crypto.randomUUID();
 
-    // ✅ Initialize logs
+   
     logStore[runId] = {
       logs: ["🚀 Starting auto apply..."],
       status: "running",
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       logStore[runId].logs.push(msg);
     };
 
-    // 🔥 Background execution (DO NOT AWAIT)
+   
     (async () => {
       try {
         addLog("🔍 Opening job page...");
@@ -70,23 +70,23 @@ export async function POST(req: NextRequest) {
 
           console.log("Agent:", chunk);
 
-          // 🔥 Parse SSE stream properly
+         
           const lines = chunk.split("\n");
 
           for (let line of lines) {
             line = line.trim();
 
-            // ignore noise
+            
             if (!line || line === "data: [DONE]") continue;
 
-            // remove "data:" prefix
+           
             if (line.startsWith("data:")) {
               line = line.replace("data:", "").trim();
             }
 
             if (!line) continue;
 
-            // 🎯 Clean user-friendly logs
+           
             const lower = line.toLowerCase();
 
             if (lower.includes("open")) {
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // ✅ Final status detection
+       
         if (fullText.includes("login_required")) {
           addLog("🔐 Login required");
           logStore[runId].status = "completed";
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
       }
     })();
 
-    // ✅ Immediate response to frontend
+    
     return NextResponse.json({
       success: true,
       status: "applied_started",

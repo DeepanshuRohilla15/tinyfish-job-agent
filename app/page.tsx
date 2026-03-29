@@ -10,19 +10,6 @@ export default function Home() {
 
   const [jobs, setJobs] = useState([]);
 
-  // const dummyJobs = [
-  //   {
-  //     title: "Backend Engineer",
-  //     company: "Amazon",
-  //     status: "Applied",
-  //   },
-  //   {
-  //     title: "Software Engineer",
-  //     company: "Google",
-  //     status: "Pending",
-  //   },
-  // ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
       <Navbar />
